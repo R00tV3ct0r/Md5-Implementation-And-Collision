@@ -70,6 +70,9 @@ The `Collision_Attack/` directory contains the scripts and research material for
 - *How to Break MD5 and Other Hash Functions* — included in `Collision_Attack/`.
 - *On Collisions for MD5* — Marc Stevens, included in `Collision_Attack/`.
 - [universal-pdf-md5-collision](https://github.com/adrien1018/universal-pdf-md5-collision)
+- [PoC||GTFO 0x14](https://security-bits.de/pocgtfo/pocorgtfo14.pdf)
+- [PDF structure diagram](https://github.com/corkami/pics/blob/master/binary/PDF.png)
+- [the-structure-of-a-pdf-file](https://medium.com/@jberkenbilt/the-structure-of-a-pdf-file-6f08114a58f6)
 
 ## License
 
