@@ -28,6 +28,7 @@ def main():
     ap = argparse.ArgumentParser(description="Create a PDF file that contains his own hash (1 page only)")
     ap.add_argument('input')
     ap.add_argument('-o', '--output')
+    ap.add_argument('--msg', default="Md5 of this document : ", help='Message to display; default : "Md5 of this document : " ')
     ap.add_argument('--posx', default="center", help='horizontal position from the left size; default : center ')
     ap.add_argument('--posy', default=8, help="vertical position from the bottom; default : 8")
     ap.add_argument('--color', choices=['black', 'white'], default='black', help="text color in ['black', 'white']")
@@ -102,7 +103,7 @@ def main():
     mediabox = page.mediabox
     left, bottom, right = float(mediabox.left), float(mediabox.bottom), float(mediabox.right)
     wide = right - left
-    label = "MD5 de ce document : "
+    label = a.msg
 
     # calcul size of the police
     # with a margin of 20 on each size
