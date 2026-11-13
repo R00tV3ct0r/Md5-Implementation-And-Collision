@@ -2,7 +2,7 @@
 
 This repo is a compilation of all the resources that I studied to create my own Python implementation of an MD5 Quine in a PDF.
 
-The current implementation can create an MD5 Quine (a PDF containing its own MD5 hash) from any PDF file that contains only one page and fewer than 996 objects. In practice, this covers almost every single-page PDF file.
+The current implementation can create an MD5 Quine (a PDF containing its own MD5 hash) from any PDF file containing only one page and fewer than 996 objects, without requiring any additional computation. In practice, this covers almost every single-page PDF file.
 
 > **Important:** ALL the code in this repo is written by me, but the explanations/comments may have been written by AI.
 
@@ -65,6 +65,14 @@ The script also accepts `--posx`, `--posy`, and `--color` options.
 Run `python 5_MD5_IN_PDF.py --help` for details.
 
 Make sure to run the script from `PDF_Quine/` so it can find the supplied `collisions-1` and `collisions-2` files.
+
+## Demonstration 
+
+| Generated PDF | MD5 Verification |
+|:---:|:---:|
+| ![PDF Quine](Images/pdf-quine.png) | ![MD5 Verification](Images/md5-verification.png) |
+
+You can also check `MD5 QUINE DEMONSTRATION.pdf` to verify the result.
 
 ## License
 
