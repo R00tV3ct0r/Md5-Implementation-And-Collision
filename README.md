@@ -1,78 +1,70 @@
-# MD5 Implementation and Collision Attacks
+# MD5 Implementation, Collisions and PDF Quines
 
-A personal Python implementation of MD5, together with experiments and research material I used to learn about hash collisions and practical collision techniques.
+This repo is a compilation of all the resources that I studied to create my own Python implementation of an MD5 Quine in a PDF.
+
+The current implementation can create an MD5 Quine (a PDF containing its own MD5 hash) from any PDF file that contains only one page and fewer than 996 objects. In practice, this covers almost every single-page PDF file.
+
+> **Important:** ALL the code in this repo is written by me, but the explanations/comments may have been written by AI.
 
 ## MD5 Implementation
 
-Calculate the MD5 hash of a string:
+1. First things first, before understanding collisions, you need to understand how MD5 works. The best way to learn that is to reimplement it yourself, as I did.
 
-```bash
-python Md5.py -s "Hello World!"
-```
+   I used these resources to implement it:
 
-Calculate the MD5 hash of a file:
-
-```bash
-python Md5.py -f my_file.txt
-```
-
-Display available options:
-
-```bash
-python Md5.py --help
-```
+   - [MD5 Explained – YouTube](https://www.youtube.com/watch?v=5MiMK45gkTY)
+   - [MD5 – Wikipedia](https://en.wikipedia.org/wiki/MD5)
 
 ## Collision Attacks
 
-### Suggested Learning Path
+2. Once you really understand MD5, you need to learn more about collision attacks and preimage attacks: what are the differences between them, why is one vulnerable and the other one not?
 
-This is the order I recommend for discovering the subject and following the same path I took:
+3. After acquiring this basic knowledge, try to implement a basic brute-force attack to see what the main issues with this method are.
 
-1. **Start with MD5 itself.** Try to re-implement the MD5 function using the sources listed below, or inspect my implementation in `Md5.py`.
-2. **Understand the goals.** Learn the difference between a collision attack and a preimage attack.
-3. **Try the simple search.** Try implementing a basic brute-force collision search, then compare your approach with `Collision_Attack/0_Brute_force.py`. Notice how storing previously seen hashes uses more and more memory.
-4. **Reduce memory use.** Read about cycle detection, then implement `Collision_Attack/1_Floyd.py` and `Collision_Attack/2_Brent.py`. These approaches use constant memory, trading some additional computation for the reduced memory use.
-5. **Explore the Xiaoyun Wang and Hongbo Yu research.** Read `3_How to Break MD5 and Other Hash Functions.pdf`. Work through the mathematical reasoning to understand how the attacks work.
-6. **Continue with M.M.J. Stevens paper.** Read `4_On Collisions for MD5 - M.M.J. Stevens.pdf` to learn more about MD5 collisions. If you are short on time, focus on the main ideas rather than working through every derivation.
-7. **Explore existing examples.** Experiment with the [universal-pdf-md5-collision repository](https://github.com/adrien1018/universal-pdf-md5-collision) to see how the PDF collision technique works in practice, and check out the early example in [PoC||GTFO 0x14](https://security-bits.de/pocgtfo/pocorgtfo14.pdf).
-8. **Learn about the PDF format.** Use the [PDF structure diagram](https://github.com/corkami/pics/blob/master/binary/PDF.png) and [this introduction to PDF files](https://medium.com/@jberkenbilt/the-structure-of-a-pdf-file-6f08114a58f6) to understand how PDFs are structured.
-9. **Implement the final script yourself.** Use the supplied `collisions-1` and `collisions-2` blocks to build your own version of `Collision_Attack/5_MD5_IN_PDF.py`.
+   - `Collision_Attack/0_Brute_force.py`
 
-To run the PDF example, first install `pypdf` and the `qpdf` command-line tool. From the repository root, run:
+4. After noticing that there are two main issues with brute-force attacks, namely computation and memory usage, you can try to solve the memory issue since it is much easier than solving the computation issue. For that, you need to learn about Floyd's and Brent's cycle detection algorithms. They both trade memory usage for slightly more computation, which solves the first issue!
+
+   You can find my implementations and explanations (written by AI) directly in the Python files.
+
+   - `Collision_Attack/1_Floyd.py`
+   - `Collision_Attack/2_Brent.py`
+
+5. Now that you understand the basic algorithms, it's time to get into the hard part: how MD5 collisions actually work.
+
+   First of all, you need to read `3_How to Break MD5 and Other Hash Functions.pdf`, written by **Xiaoyun Wang and Hongbo Yu**. Take the time to go through all the mathematics step by step to really understand what you are reading. It takes a lot of time, but it's worth it, trust me!
+
+6. Once you fully understand how collision attacks work, it's time to read `4_On Collisions for MD5 - M.M.J. Stevens.pdf` by **M.M.J. Stevens**. You don't need to go through all the mathematics; just read it and understand the mechanism.
+
+> **Important:** The brute-force, Floyd, and Brent scripts implement collision searches on a truncated hash prefix (32 bits by default), not collisions between complete 128-bit MD5 digests. Finding the latter using these generic methods would be computationally impractical.
+
+## PDF Quine
+
+7. Explore the GitHub repo [universal-pdf-md5-collision](https://github.com/adrien1018/universal-pdf-md5-collision) to see how you can create PDF Quines. Play with it, look at the code, and use AI to help you understand how it really works.
+
+   Also, take a look at the first paper to publish an MD5 Quine: [PoC||GTFO 0x14](https://security-bits.de/pocgtfo/pocorgtfo14.pdf).
+
+8. Before implementing your own program, make sure to learn the structure of a PDF file. There are a lot of great resources on the internet. In any case, take a look at these links:
+
+   - [PDF structure diagram](https://github.com/corkami/pics/blob/master/binary/PDF.png)
+   - [An introduction to PDF files](https://medium.com/@jberkenbilt/the-structure-of-a-pdf-file-6f08114a58f6)
+
+9. It's time to implement it!!!
+
+   Use the supplied `collisions-1` and `collisions-2` files from the [universal-pdf-md5-collision](https://github.com/adrien1018/universal-pdf-md5-collision) repository to develop your own program.
+
+## Quick Start
 
 ```bash
-cd Collision_Attack
+cd PDF_Quine
 python 5_MD5_IN_PDF.py input.pdf -o output.pdf
 ```
 
-The script also accepts `--posx`, `--posy`, and `--color` options. Run `python 5_MD5_IN_PDF.py --help` for details. Run it from `Collision_Attack/` so it can find the supplied collision-block files.
+The script also accepts `--posx`, `--posy`, and `--color` options.
 
-As you go, consider: What counts as a collision? Why does storing every result cost memory? How does cycle detection trade computation for memory? What is different about the generic search scripts and the attacks described in the research papers?
+Run `python 5_MD5_IN_PDF.py --help` for details.
 
-### What's Included
-
-The `Collision_Attack/` directory contains the scripts and research material for these steps:
-
-- `0_Brute_force.py` — basic brute-force collision implementation.
-- `1_Floyd.py` — collision search using Floyd's cycle-finding algorithm to reduce memory use.
-- `2_Brent.py` — collision search using Brent's cycle-finding algorithm, an alternative to Floyd's method.
-- `3_How to Break MD5 and Other Hash Functions.pdf` — a research paper on attacks against MD5 and other hash functions.
-- `4_On Collisions for MD5 - M.M.J. Stevens.pdf` — a research paper by Marc Stevens about MD5 collisions.
-- `5_MD5_IN_PDF.py` — an example involving MD5 collisions in PDF files, based on the work of [Adrien Wu](https://github.com/adrien1018/universal-pdf-md5-collision).
-- `collisions-1` / `collisions-2` — files used for the PDF collision.
-
-**Important:** The brute-force, Floyd, and Brent scripts search for collisions on a truncated hash prefix (32 bits by default), not collisions between complete 128-bit MD5 digests. They demonstrate generic collision-search strategies and are separate from the differential cryptanalysis techniques described in the research papers. This repository is an educational exploration, not a practical full-MD5 collision generator. MD5 is cryptographically broken and should not be used where security or collision resistance is required.
-
-## Sources
-
-- [MD5 Explained – YouTube](https://www.youtube.com/watch?v=5MiMK45gkTY)
-- [MD5 – Wikipedia](https://en.wikipedia.org/wiki/MD5)
-- *How to Break MD5 and Other Hash Functions* — included in `Collision_Attack/`.
-- *On Collisions for MD5* — Marc Stevens, included in `Collision_Attack/`.
-- [universal-pdf-md5-collision](https://github.com/adrien1018/universal-pdf-md5-collision)
-- [PoC||GTFO 0x14](https://security-bits.de/pocgtfo/pocorgtfo14.pdf)
-- [PDF structure diagram](https://github.com/corkami/pics/blob/master/binary/PDF.png)
-- [the-structure-of-a-pdf-file](https://medium.com/@jberkenbilt/the-structure-of-a-pdf-file-6f08114a58f6)
+Make sure to run the script from `PDF_Quine/` so it can find the supplied `collisions-1` and `collisions-2` files.
 
 ## License
 
