@@ -55,14 +55,31 @@ The current implementation can create an MD5 Quine (a PDF containing its own MD5
 
 ## Quick Start
 
+### Install dependencies
+
+Install the required Python package:
+
+```bash
+pip install pypdf
+```
+
+Install qpdf:
+
+```bash
+sudo apt update
+sudo apt install qpdf
+```
+
+> **Note:** This implementation currently works only on Linux because it requires `qpdf` to process PDF files.
+
+### Run the script
+
 ```bash
 cd PDF_Quine
 python 5_MD5_IN_PDF.py input.pdf -o output.pdf
 ```
 
-The script also accepts `--posx`, `--posy`, and `--color` options.
-
-Run `python 5_MD5_IN_PDF.py --help` for details.
+The script also accepts `--posx`, `--posy`, `--msg` and `--color` options. Run `python 5_MD5_IN_PDF.py --help` for details.
 
 Make sure to run the script from `PDF_Quine/` so it can find the supplied `collisions-1` and `collisions-2` files.
 
