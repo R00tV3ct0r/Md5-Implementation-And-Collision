@@ -2,14 +2,9 @@
 
 This repo is a compilation of all the resources that I studied to create my own Python implementation of an MD5 Quine in a PDF.
 
-The current implementation can create an MD5 Quine (a PDF containing its own MD5 hash) from any PDF file containing fewer than 996 objects, without requiring any additional computation. 
+The current implementation can create an MD5 Quine (a PDF containing its own MD5 hash) from any PDF file without requiring any additional computation. 
 
-In practice, the number of pages you can handle depends a lot on the complexity of your PDF:
-| Type of PDF | Estimated number of pages |
-|-|-|
-| Simple text PDF | 250+ pages |
-| Text with some images | 100-250 pages |
-| Really complex PDF (many images, links, annotations) | 1-10 pages |
+It works with PDFs of any size: objects that would conflict with the ones the script creates are automatically renumbered.
 
 > **Important:** ALL the code in this repo is written by me, but the explanations/comments may have been written by AI.
 

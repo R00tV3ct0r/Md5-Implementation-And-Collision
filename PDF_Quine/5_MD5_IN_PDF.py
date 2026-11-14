@@ -71,9 +71,6 @@ def main():
     if not list_objs:
         print("obj is empty")
         exit()
-    elif max(list_objs) > 996:
-        print(f"ERRROR : PDF to complex {max(list_objs)} > 997 obj ")
-        exit()
 
     print(f"PDF file as {max(list_objs)} objects")
 
@@ -86,6 +83,37 @@ def main():
         index_page = 0
 
     page = rd.pages[index_page]
+
+    old_page_num = page.indirect_reference.idnum
+
+    # we attribute a new number to objects > 996
+    new_num = {}
+    next = 3005
+    for n in sorted(list_objs):
+        if n > 996:
+            new_num[n] = next
+            next += 1
+
+    # pattern to find all references 
+
+    # \d = any digit
+    # (?!\d) = negative lookahead assertion, ensures that the match is not followed by a digit
+    # (?<!\d) = negative lookbehind assertion, ensures that the match is not preceded by a digit
+    # (\d+) = capture group that matches one or more digits
+    pattern = re.compile(rb'(?<!\d)(\d+) 0 R(?!\d)')
+
+    # function that replace the reference using regex pattern
+    def replace(pdf_bytes):
+        def repl(match):
+            n = int(match[1])
+            if n == old_page_num:
+                return b"999 0 R"
+            else:
+                return b"%d 0 R" % new_num.get(n, n)
+        return pattern.sub(repl, pdf_bytes)
+
+    final_objs = {}
+    other_page_nums = set()
 
     kids = b""
     for i, other_page in enumerate(list(rd.pages)):
@@ -100,22 +128,18 @@ def main():
             if index != '/Parent':
                 dico += ser(index) + b" " + ser(values)
 
-        list_objs[n_obj] = b"<</Parent 998 0 R" + dico + b">>\n"
-        kids += b" %d 0 R" % n_obj
+        new_n = new_num.get(n_obj, n_obj)
+        final_objs[new_n] = b"<</Parent 998 0 R" + replace(dico) + b">>\n"
+        other_page_nums.add(n_obj)
+        kids += b" %d 0 R" % new_n
+
     nb_pages = len(rd.pages)
 
-    # correct reference to solve issue with link pointing to the wrong page
-
-    old_num = page.indirect_reference.idnum
-
-    # \d = any digit
-    # (?!\d) = negative lookahead assertion, ensures that the match is not followed by a digit
-    # (?<!\d) = negative lookbehind assertion, ensures that the match is not preceded by a digit
-    pattern = re.compile(rb'(?<!\d)%d 0 R(?!\d)' % old_num)
-
     for n, body in list(list_objs.items()):
+        if n in other_page_nums:
+            continue
         head, middle, tail = body.partition(b'stream\n')
-        list_objs[n] = pattern.sub(b'999 0 R', head) + middle + tail
+        final_objs[new_num.get(n, n)] = replace(head) + middle + tail
 
     # ------------------ Balence the content of the page ---------------------
 
@@ -216,6 +240,7 @@ def main():
     if '/ExtGState' not in ressources:
         rb += b"/ExtGState<</GQz 3003 0 R>>"
     rb += b">>"
+    rb = replace(rb)
 
     # ------------------- object 999 -------------------
     # 192 = prefix + obj 1000; 32 caratere * 16 possibility; 128 = size of a collion paire
@@ -226,7 +251,7 @@ def main():
 
     for index, values in page.items():
         if index not in skip:
-            tail += ser(index) + b" " + ser(values)
+            tail += replace(ser(index) + b" " + ser(values))
 
     tail += b"/Parent 998 0 R/Resources" + rb + b">>\nendobj\n"
 
@@ -240,8 +265,7 @@ def main():
     # new catalog 
     root = rd.trailer['/Root']
     drop = {'/Pages', '/Type', '/Version', '/Threads'}
-    catalog = b"".join(ser(index) + b" " + ser(values) for index, values in root.items() if index not in drop)
-    catalog = pattern.sub(b'999 0 R', catalog)
+    catalog = replace(b"".join(ser(index) + b" " + ser(values) for index, values in root.items() if index not in drop))
 
     add(998, b"998 0 obj\n<</Type/Pages/Count %d/Kids[%s]>>\nendobj\n" % (nb_pages, kids))
     add(997, b"997 0 obj\n<</Type/Catalog/Pages 998 0 R" + catalog + b">>\nendobj\n")
@@ -257,13 +281,13 @@ def main():
     add(3001, b"3001 0 obj\n<</Type/Font/Subtype/Type1/BaseFont/Courier-Bold/Encoding/WinAnsiEncoding>>\nendobj\n")
     add(3003, b"3003 0 obj\n<</Type/ExtGState/ca 1/CA 1/BM/Normal/SMask/None>>\nendobj\n")
 
-    for n, body in list_objs.items():              
+    for n, body in final_objs.items():              
         add(n, b"%d 0 obj\n" % n + body + b"endobj\n")
 
     # xref table add /W[1 4 2] for every entry, 
     # 1 byte for the type, 4 bytes for the offset, 2 bytes for the generation number
     #-----------------------xref table -----------------
-    xref_id = 3004
+    xref_id = max([3003] + list(final_objs)) + 1
     size = xref_id + 1
     xoff = len(construct_file)
     rows = b''
@@ -283,12 +307,12 @@ def main():
     m = re.search(rb'/Info (\d+) 0 R', trailer)
 
     if m: 
-        extra += b"/Info %s 0 R" % m[1]
+        extra += replace(b"/Info %s 0 R" % m[1])
 
     m = re.search(rb'/ID \[(<[0-9a-f]+><[0-9a-f]+>)\]', trailer)
 
     if m: 
-        extra += b"/ID[%s]" % m[1]
+        extra += rb"/ID[%s]" % m[1]
 
     # /XRef stock the compress entry ans startxref show his start position,
     # %%EOF end of the pdf
