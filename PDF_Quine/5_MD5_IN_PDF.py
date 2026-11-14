@@ -66,7 +66,7 @@ def main():
         exit()
 
     print(f"PDF file as {max(list_objs)} objects")
-    
+
     rd = PdfReader(BytesIO(simplified))
     page = rd.pages[0]
 
@@ -275,6 +275,15 @@ def main():
     data += construct_file[len(data):]
     open(a.output, 'wb').write(data)
 
+    try:
+        os.remove("simplified.pdf")
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        print(f"ERROR: Could not remove simplified.pdf: {e}")
+
+    if r.stderr:
+        print(r.stderr)
 
 if __name__ == '__main__':
     main()
