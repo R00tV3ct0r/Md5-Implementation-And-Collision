@@ -312,7 +312,7 @@ def main():
     m = re.search(rb'/ID \[(<[0-9a-f]+><[0-9a-f]+>)\]', trailer)
 
     if m: 
-        extra += rb"/ID[%s]" % m[1]
+        extra += b"/ID[%s]" % m[1]
 
     # /XRef stock the compress entry ans startxref show his start position,
     # %%EOF end of the pdf
