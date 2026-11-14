@@ -26,7 +26,7 @@ def ser(o):
     return b.getvalue()
 
 def main():
-    ap = argparse.ArgumentParser(description="Create a PDF file that contains his own hash (1 page only)")
+    ap = argparse.ArgumentParser(description="Create a PDF file that contains his own hash")
     ap.add_argument('input')
     ap.add_argument('-o', '--output')
     ap.add_argument('--msg', default="Md5 of this document : ", help='Message to display; default : "Md5 of this document : " ')
@@ -55,7 +55,7 @@ def main():
             print(f"ERROR : {r.stderr}")
             exit()
         elif r.returncode == 3:
-            print("ERROR CODE 2 : File created with qpdf but may be corrupted")
+            print("WARNING : qpdf finished with warnings, the file may be damaged")
 
         simplified = open(simplified_path, "rb").read()
 
@@ -71,7 +71,7 @@ def main():
     if not list_objs:
         print("obj is empty")
         exit()
-    elif max(list_objs) > 997:
+    elif max(list_objs) > 996:
         print(f"ERRROR : PDF to complex {max(list_objs)} > 997 obj ")
         exit()
 
@@ -111,11 +111,11 @@ def main():
     # \d = any digit
     # (?!\d) = negative lookahead assertion, ensures that the match is not followed by a digit
     # (?<!\d) = negative lookbehind assertion, ensures that the match is not preceded by a digit
-    pattern = re.compile(rb' (?<!\d)%d 0 R(?!\d)' % old_num)
+    pattern = re.compile(rb'(?<!\d)%d 0 R(?!\d)' % old_num)
 
     for n, body in list(list_objs.items()):
         head, middle, tail = body.partition(b'stream\n')
-        list_objs[n] = pattern.sub(b' 999 0 R', head) + middle + tail
+        list_objs[n] = pattern.sub(b'999 0 R', head) + middle + tail
 
     # ------------------ Balence the content of the page ---------------------
 
@@ -221,7 +221,7 @@ def main():
     # 192 = prefix + obj 1000; 32 caratere * 16 possibility; 128 = size of a collion paire
     prefix = c1[:192 + 32 * 16 * 128]
 
-    skip = {'/Type', '/Contents', '/Parent', '/Resources', '/StructParents', '/MediaBox'}
+    skip = {'/Type', '/Contents', '/Parent', '/Resources', '/MediaBox'}
     tail = b"\n3000 0 R]/MediaBox" + ser(mediabox)
 
     for index, values in page.items():
@@ -239,8 +239,9 @@ def main():
 
     # new catalog 
     root = rd.trailer['/Root']
-    drop = {'/Pages', '/Type', '/Version', '/StructTreeRoot', '/MarkInfo', '/Outlines', '/Names', '/Dests', '/OpenAction', '/AcroForm', '/Threads'}
+    drop = {'/Pages', '/Type', '/Version', '/Threads'}
     catalog = b"".join(ser(index) + b" " + ser(values) for index, values in root.items() if index not in drop)
+    catalog = pattern.sub(b'999 0 R', catalog)
 
     add(998, b"998 0 obj\n<</Type/Pages/Count %d/Kids[%s]>>\nendobj\n" % (nb_pages, kids))
     add(997, b"997 0 obj\n<</Type/Catalog/Pages 998 0 R" + catalog + b">>\nendobj\n")
