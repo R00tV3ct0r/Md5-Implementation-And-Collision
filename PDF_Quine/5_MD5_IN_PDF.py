@@ -62,14 +62,26 @@ def main():
         print("obj is empty")
         exit()
     elif max(list_objs) > 997:
-        print("ERRROR : PDF to complex more than 997 obj alredy created")
+        print(f"ERRROR : PDF to complex {max(list_objs)} > 997 obj ")
         exit()
 
+    print(f"PDF file as {max(list_objs)} objects")
+    
     rd = PdfReader(BytesIO(simplified))
-    if len(rd.pages) > 1:
-        print("number of page superior at 1, keep only the first one and continue")
-
     page = rd.pages[0]
+
+    kids = b"999 0 R"
+    for other_page in list(rd.pages)[1:]:
+        n_obj = other_page.indirect_reference.idnum
+        dico = b""
+        for index, values in other_page.items():
+            if index != '/Parent':
+                dico += ser(index) + b" " + ser(values)
+
+        list_objs[n_obj] = b"<</Parent 998 0 R" + dico + b">>\n"
+        kids += b" %d 0 R" % n_obj
+    nb_pages = len(rd.pages)
+
 
     # ------------------ Balence the content of the page ---------------------
 
@@ -196,7 +208,7 @@ def main():
     drop = {'/Pages', '/Type', '/Version', '/StructTreeRoot', '/MarkInfo', '/Outlines', '/Names', '/Dests', '/OpenAction', '/AcroForm', '/Threads'}
     catalog = b"".join(ser(index) + b" " + ser(values) for index, values in root.items() if index not in drop)
 
-    add(998, b"998 0 obj\n<</Type/Pages/Count 1/Kids[999 0 R]>>\nendobj\n")
+    add(998, b"998 0 obj\n<</Type/Pages/Count %d/Kids[%s]>>\nendobj\n" % (nb_pages, kids))
     add(997, b"997 0 obj\n<</Type/Catalog/Pages 998 0 R" + catalog + b">>\nendobj\n")
     add(1000, stream(1000, before))
 
