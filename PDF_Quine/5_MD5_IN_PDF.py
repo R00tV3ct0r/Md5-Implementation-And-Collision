@@ -5,6 +5,7 @@
 # The code is written by me with the help of IA in rare occasions.
 
 
+import tempfile
 import argparse, subprocess, os, re, struct, zlib, hashlib
 from pypdf import PdfReader
 from pypdf.generic import ArrayObject, StreamObject, ContentStream
@@ -35,21 +36,28 @@ def main():
     ap.add_argument('--color', choices=['black', 'white'], default='black', help="text color in ['black', 'white']")
     a = ap.parse_args()
     if a.output is None:
-        a.output = os.path.splitext(a.input)[0] + "_md5.pdf"
+        a.output = os.path.splitext(a.input)[0] + "_QUINE.pdf"
 
     c1 = open("collisions-1", 'rb').read()
     c2 = open("collisions-2", 'rb').read()
 
     # -------------------normalisation of the pdf----------------------
+    with tempfile.TemporaryDirectory() as tmp:
+        simplified_path = os.path.join(tmp, "simplified.pdf")
 
-    r = subprocess.run(['qpdf', '--object-streams=disable', '--compress-streams=y', '--force-version=1.7', a.input, 'simplified.pdf'], capture_output=True, text=True)
-    if r.returncode == 2 or not os.path.exists("simplified.pdf"):
-        print(f"ERROR : {r.stderr}")
-        exit()
-    elif r.returncode == 3:
-        print("ERROR CODE 2 : File created with qpdf but may be corrupted")
+        try:
+            r = subprocess.run(['qpdf', '--object-streams=disable', '--compress-streams=y', '--force-version=1.7', a.input, simplified_path], capture_output=True, text=True)
+        except FileNotFoundError:
+            print("ERROR : qpdf not found. Please install qpdf and ensure it is in your system's PATH.")
+            exit()
+        
+        if r.returncode == 2 or not os.path.exists(simplified_path):
+            print(f"ERROR : {r.stderr}")
+            exit()
+        elif r.returncode == 3:
+            print("ERROR CODE 2 : File created with qpdf but may be corrupted")
 
-    simplified = open("simplified.pdf", "rb").read()
+        simplified = open(simplified_path, "rb").read()
 
     # rb = raw byte
     # (?m) = multi line
@@ -83,8 +91,10 @@ def main():
         if i == index_page:
             kids += b" 999 0 R"
             continue
+
         n_obj = other_page.indirect_reference.idnum
         dico = b""
+
         for index, values in other_page.items():
             if index != '/Parent':
                 dico += ser(index) + b" " + ser(values)
@@ -147,13 +157,13 @@ def main():
     elif a.color == "black":
         color = b"0 0 0"         
 
-        # we keep the initia pdf and we add the new text and stream
-        before = content_data_balance + b"\n/GQz gs\n"
-        # BT/ET open and close a text object
-        # Tf set the font and size 
-        # rg the color (format : "R G B")
-        # Td set the position of the text (format : "x y Td") 
-        # Tj show the text (format : "(text)Tj")
+    # we keep the initia pdf and we add the new text and stream
+    before = content_data_balance + b"\n/GQz gs\n"
+    # BT/ET open and close a text object
+    # Tf set the font and size 
+    # rg the color (format : "R G B")
+    # Td set the position of the text (format : "x y Td") 
+    # Tj show the text (format : "(text)Tj")
     before += (b"BT\n/FQz %f Tf\n" % police_size + color + b" rg\n" + b"%f %f Td\n" % (x, y) + pdfstr(label) + b"Tj\nET\n" 
             b"BT\n/FQz %f Tf\n" % police_size + color + b" rg\n" + b"%f %f Td\n" % (x + len(label) * caratere_wide, y))
     after = b"ET\n"
@@ -285,16 +295,6 @@ def main():
 
     data += construct_file[len(data):]
     open(a.output, 'wb').write(data)
-
-    try:
-        os.remove("simplified.pdf")
-    except FileNotFoundError:
-        pass
-    except OSError as e:
-        print(f"ERROR: Could not remove simplified.pdf: {e}")
-
-    if r.stderr:
-        print(r.stderr)
 
 if __name__ == '__main__':
     main()
