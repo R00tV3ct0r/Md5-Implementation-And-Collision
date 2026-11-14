@@ -65,6 +65,7 @@ def main():
     # (\d+) = one or multiple number 
     # (.*?) = every char 
     # re.S = (.*?) accept /n 
+    # https://docs.python.org/3/library/re.html
     list_objs = {int(m[1]) : m[2] for m in re.finditer(rb'(?m)^(\d+) 0 obj\n(.*?)endobj\n', simplified, re.S)}
 
     if not list_objs:
@@ -103,6 +104,18 @@ def main():
         kids += b" %d 0 R" % n_obj
     nb_pages = len(rd.pages)
 
+    # correct reference to solve issue with link pointing to the wrong page
+
+    old_num = page.indirect_reference.idnum
+
+    # \d = any digit
+    # (?!\d) = negative lookahead assertion, ensures that the match is not followed by a digit
+    # (?<!\d) = negative lookbehind assertion, ensures that the match is not preceded by a digit
+    pattern = re.compile(rb' (?<!\d)%d 0 R(?!\d)' % old_num)
+
+    for n, body in list(list_objs.items()):
+        head, middle, tail = body.partition(b'stream\n')
+        list_objs[n] = pattern.sub(b' 999 0 R', head) + middle + tail
 
     # ------------------ Balence the content of the page ---------------------
 
