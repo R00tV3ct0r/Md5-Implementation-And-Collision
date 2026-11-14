@@ -29,6 +29,7 @@ def main():
     ap.add_argument('input')
     ap.add_argument('-o', '--output')
     ap.add_argument('--msg', default="Md5 of this document : ", help='Message to display; default : "Md5 of this document : " ')
+    ap.add_argument('--page', default=1, type=int, help='Page number to write the Hash; default : 1')
     ap.add_argument('--posx', default="center", help='horizontal position from the left size; default : center ')
     ap.add_argument('--posy', default=8, help="vertical position from the bottom; default : 8")
     ap.add_argument('--color', choices=['black', 'white'], default='black', help="text color in ['black', 'white']")
@@ -68,10 +69,20 @@ def main():
     print(f"PDF file as {max(list_objs)} objects")
 
     rd = PdfReader(BytesIO(simplified))
-    page = rd.pages[0]
 
-    kids = b"999 0 R"
-    for other_page in list(rd.pages)[1:]:
+    if 1 <= a.page <= len(rd.pages):
+        index_page = a.page - 1
+    else:
+        print(f"Page number {a.page} is out of range, using page 1 instead")
+        index_page = 0
+
+    page = rd.pages[index_page]
+
+    kids = b""
+    for i, other_page in enumerate(list(rd.pages)):
+        if i == index_page:
+            kids += b" 999 0 R"
+            continue
         n_obj = other_page.indirect_reference.idnum
         dico = b""
         for index, values in other_page.items():

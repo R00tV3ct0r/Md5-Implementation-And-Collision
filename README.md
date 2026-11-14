@@ -39,7 +39,7 @@ cd PDF_Quine
 python 5_MD5_IN_PDF.py input.pdf -o output.pdf
 ```
 
-The script also accepts `--posx`, `--posy`, `--msg` and `--color` options. Run `python 5_MD5_IN_PDF.py --help` for details.
+The script also accepts `--posx`, `--posy`, `--msg`, `--page` and `--color` options. Run `python 5_MD5_IN_PDF.py --help` for details.
 
 Make sure to run the script from `PDF_Quine/` so it can find the supplied `collisions-1` and `collisions-2` files.
 
